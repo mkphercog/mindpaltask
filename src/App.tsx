@@ -42,6 +42,7 @@ function App() {
 
   return (
     <div>
+      <h1>Mindpal task</h1>
       <form onSubmit={handleSubmit}>
         <div className="inputContainer">
           <label htmlFor="userName">User name</label>

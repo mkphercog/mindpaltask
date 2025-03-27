@@ -12,4 +12,4 @@
 5. try add some record to your supabase db
 6. you will see new record on the list above form
 
-## [Live here]()
+## [Live here](https://mindpaltask.vercel.app/)
