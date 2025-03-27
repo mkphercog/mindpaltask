@@ -41,7 +41,8 @@ serve(async (req) => {
 
     return new Response(
       JSON.stringify({
-        message: "Correctly saved user data with encrypted user key!",
+        message:
+          `Correctly saved user data with encrypted user key! Secret_key before: ${secret_key}, secret_key after: ${encryptedKey}`,
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
