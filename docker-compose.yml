@@ -1,0 +1,104 @@
+version: "3.8"
+
+services:
+  db:
+    image: supabase/postgres:latest
+    container_name: supabase_db
+    environment:
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=postgres
+    ports:
+      - "5432:5432"
+    networks:
+      - supabase_default
+    volumes:
+      - supabase_db_data:/var/lib/postgresql/data
+    restart: always
+
+  auth:
+    image: supabase/gotrue:latest
+    container_name: supabase_auth
+    environment:
+      - GOTRUE_JWT_SECRET=your-jwt-secret
+      - GOTRUE_API_URL=http://auth:8081
+      - GOTRUE_DB_DRIVER=postgres
+      - GOTRUE_DB_URI=postgres://postgres:postgres@db:5432/postgres
+    ports:
+      - "8081:8081"
+    depends_on:
+      - db
+    networks:
+      - supabase_default
+
+  realtime:
+    image: supabase/realtime:latest
+    container_name: supabase_realtime
+    environment:
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DB_NAME=postgres
+    ports:
+      - "4000:4000"
+    depends_on:
+      - db
+    networks:
+      - supabase_default
+
+  storage:
+    image: supabase/storage-api:latest
+    container_name: supabase_storage
+    environment:
+      - STORAGE_DB_HOST=db
+      - STORAGE_DB_PORT=5432
+      - STORAGE_DB_USER=postgres
+      - STORAGE_DB_PASSWORD=postgres
+      - STORAGE_DB_NAME=postgres
+    ports:
+      - "5000:5000"
+    depends_on:
+      - db
+    networks:
+      - supabase_default
+
+  kong:
+    image: kong:latest
+    container_name: supabase_kong
+    environment:
+      - KONG_DATABASE=off
+      - KONG_PORT_MAPS=80:80
+      - KONG_PORT_LISTEN=80
+    ports:
+      - "8000:8000"
+    networks:
+      - supabase_default
+    depends_on:
+      - db
+      - auth
+      - realtime
+      - storage
+
+  dashboard:
+    image: supabase/dashboard:latest
+    container_name: supabase_dashboard
+    environment:
+      - SUPABASE_URL=http://localhost:8000
+    ports:
+      - "8000:8000"
+    networks:
+      - supabase_default
+    depends_on:
+      - db
+      - auth
+      - realtime
+      - storage
+      - kong
+
+networks:
+  supabase_default:
+    external: true
+
+volumes:
+  supabase_db_data:
