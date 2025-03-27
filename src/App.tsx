@@ -1,16 +1,31 @@
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useState } from "react";
 import { INITIAL_DATA } from "./App.constants";
-
-import "./App.css";
 import { UserDataType } from "./App.types";
 import { fetchUsersData, insertUserDataToSupabase } from "./App.helpers";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+
+import "./App.css";
 
 function App() {
   const [userData, setUserData] = useState<UserDataType>(INITIAL_DATA);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [displayUserData, setDisplayUserData] = useState<UserDataType[] | []>(
-    []
-  );
+  const queryClient = useQueryClient();
+
+  const { mutate } = useMutation({
+    mutationFn: (userData: UserDataType) => {
+      return insertUserDataToSupabase(userData);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["usersData"],
+      });
+    },
+  });
+
+  const { data: displayUserData } = useQuery<UserDataType[], Error>({
+    queryKey: ["usersData"],
+    queryFn: fetchUsersData,
+  });
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -18,20 +33,12 @@ function App() {
 
     if (!name || !surname || !secret_key) {
       setErrorMsg("All fields must be filled!");
-
       return;
     }
 
-    insertUserDataToSupabase(userData);
+    mutate(userData);
     setUserData(INITIAL_DATA);
   };
-
-  useEffect(() => {
-    (async () => {
-      const data = await fetchUsersData();
-      setDisplayUserData(data);
-    })();
-  }, []);
 
   return (
     <div>
@@ -77,7 +84,7 @@ function App() {
       </form>
 
       <ul>
-        {displayUserData.map((user, index) => (
+        {displayUserData?.map((user, index) => (
           <li key={index}>
             <p>
               User full name:{" "}

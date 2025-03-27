@@ -1,10 +1,7 @@
+import { UserDataType } from "./App.types";
 import { supabase } from "./supabase-client";
 
-export const insertUserDataToSupabase = async (userData: {
- name: string;
- surname: string;
- secret_key: string;
-}) => {
+export const insertUserDataToSupabase = async (userData: UserDataType) => {
  const { data, error } = await supabase.functions.invoke("encrypt-user-key", {
   body: JSON.stringify(userData),
  });
